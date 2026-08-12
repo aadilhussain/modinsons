@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "framework": null,
+  "builds": [
+    { "src": "public/index.php", "use": "vercel-php@0.7.3" },
+    { "src": "public/build/**", "use": "@vercel/static" },
+    { "src": "public/storage/**", "use": "@vercel/static" },
+    { "src": "public/(favicon.ico|robots.txt|.*\\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?))", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "public/index.php" }
+  ]
+}

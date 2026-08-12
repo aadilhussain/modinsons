@@ -6,7 +6,22 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__));
+
+// Vercel's filesystem is read-only outside /tmp, and /tmp is wiped between
+// invocations. Point Laravel's writable paths (logs, compiled views, cache)
+// there and make sure the directories exist before anything tries to write.
+if (env('VERCEL')) {
+    $storagePath = '/tmp/storage';
+
+    foreach (['app/public', 'framework/cache/data', 'framework/sessions', 'framework/testing', 'framework/views', 'logs'] as $dir) {
+        @mkdir("{$storagePath}/{$dir}", 0775, recursive: true);
+    }
+
+    $app->useStoragePath($storagePath);
+}
+
+return $app
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
