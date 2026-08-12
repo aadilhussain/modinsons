@@ -8,9 +8,56 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductController extends Controller
 {
+    /**
+     * Download the catalogue as CSV.
+     *
+     * The columns are the ones the importer reads back, so an export can be
+     * edited in a spreadsheet and imported again to bulk-update the catalogue.
+     * Each distinct spec becomes its own column for the same reason.
+     */
+    public function export(): StreamedResponse
+    {
+        $specKeys = Product::query()->whereNotNull('specs')->pluck('specs')
+            ->flatMap(fn ($s) => array_keys((array) $s))
+            ->unique()->sort()->values()->all();
+
+        $name = 'products-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($specKeys) {
+            $out = fopen('php://output', 'w');
+
+            // Excel reads a bare UTF-8 CSV as Windows-1252 and mangles the ₹ and
+            // × characters; the BOM is what tells it otherwise.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, array_merge([
+                'Name', 'SKU', 'Category', 'Brand', 'Short Description', 'Description',
+                'Unit', 'Min Order Qty', 'Badge', 'Sort Order', 'Is Active', 'Is Featured',
+            ], $specKeys));
+
+            Product::with('category')->orderBy('category_id')->orderBy('sort_order')->orderBy('name')
+                ->chunk(200, function ($rows) use ($out, $specKeys) {
+                    foreach ($rows as $p) {
+                        $specs = (array) $p->specs;
+
+                        fputcsv($out, array_merge([
+                            $p->name, $p->sku, $p->category?->name, $p->brand,
+                            $p->short_description, $p->description, $p->unit, $p->min_order_qty,
+                            $p->badge, $p->sort_order,
+                            $p->is_active ? 'Yes' : 'No',
+                            $p->is_featured ? 'Yes' : 'No',
+                        ], array_map(fn ($k) => $specs[$k] ?? '', $specKeys)));
+                    }
+                });
+
+            fclose($out);
+        }, $name, ['Content-Type' => 'text/csv']);
+    }
+
     public function index(Request $request)
     {
         $products = Product::with('category')

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CatalogueImportController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnquiryController as AdminEnquiryController;
@@ -37,6 +38,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+    Route::get('/products/export', [AdminProductController::class, 'export'])->name('products.export');
+
+    // Declared before /products/{product} so "import" is not read as a slug.
+    Route::get('/products/import', [CatalogueImportController::class, 'create'])->name('products.import');
+    Route::post('/products/import/preview', [CatalogueImportController::class, 'preview'])->name('products.import.preview');
+    Route::post('/products/import', [CatalogueImportController::class, 'store'])->name('products.import.store');
+    Route::post('/products/import/discard', [CatalogueImportController::class, 'discard'])->name('products.import.discard');
+
     Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
     Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');

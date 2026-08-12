@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\PostTooLargeException;
 
 // Vercel's filesystem is read-only outside /tmp, and /tmp is wiped between
 // invocations. Point Laravel's writable paths (logs, compiled views, cache)
@@ -58,5 +59,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // An oversized upload aborts before validation runs, so without this it
+        // surfaces as a bare "413" page rather than an explanation.
+        $exceptions->render(function (PostTooLargeException $e, Request $request) {
+            if (! $request->isMethod('POST')) {
+                return null;
+            }
+
+            return back()->withErrors([
+                'file' => 'That file is too large to upload. Save just the product list as a CSV and try again — '
+                    .'picture-heavy PDFs hold no readable text in any case.',
+            ]);
+        });
     })->create();

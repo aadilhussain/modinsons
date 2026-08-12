@@ -7,7 +7,13 @@
     <h1 class="h2">Products</h1>
     <p class="small muted mt-1">{{ $products->total() }} products in the catalogue.</p>
   </div>
-  <a class="btn btn-primary btn-sm" href="{{ route('admin.products.create') }}"><x-icon name="plus" :size="15"/> Add Product</a>
+  <div class="flex gap-1 items-center" style="flex-wrap:wrap">
+    <a class="btn btn-outline btn-sm" href="{{ route('admin.products.import') }}">
+      <x-icon name="layers" :size="15"/> Import</a>
+    <a class="btn btn-outline btn-sm" href="{{ route('admin.products.export') }}">
+      <x-icon name="download" :size="15"/> Export CSV</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('admin.products.create') }}"><x-icon name="plus" :size="15"/> Add Product</a>
+  </div>
 </div>
 
 <div class="panel">
