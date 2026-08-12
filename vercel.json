@@ -3,11 +3,12 @@
   "framework": null,
   "builds": [
     { "src": "public/index.php", "use": "vercel-php@0.7.3" },
-    { "src": "public/build/**", "use": "@vercel/static" },
-    { "src": "public/storage/**", "use": "@vercel/static" },
-    { "src": "public/(favicon.ico|robots.txt|.*\\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?))", "use": "@vercel/static" }
+    { "src": "public/assets/**", "use": "@vercel/static" },
+    { "src": "public/robots.txt", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "public/index.php" }
+    { "src": "/assets/(.*)", "dest": "/public/assets/$1" },
+    { "src": "/robots.txt", "dest": "/public/robots.txt" },
+    { "src": "/(.*)", "dest": "/public/index.php" }
   ]
 }
