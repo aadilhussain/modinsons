@@ -37,5 +37,35 @@ return [
 
     'serves' => ['Nathdwara', 'Rajsamand', 'Udaipur', 'Chittorgarh', 'Bhilwara', 'Across Rajasthan'],
 
+    // Map pin for local search. Blank omits geo coordinates from the schema
+    // rather than publishing a wrong location.
+    'geo' => [
+        'lat' => env('BIZ_LAT', ''),
+        'lng' => env('BIZ_LNG', ''),
+    ],
+
+    /*
+     * Profiles on other sites. These become schema.org sameAs, which is how
+     * search engines tie those listings to this site as one business.
+     */
+    'social' => [
+        'indiamart' => 'https://www.indiamart.com/modi-and-sons-nathdwara/',
+        'justdial'  => 'https://www.justdial.com/Nathdwara/Modi-and-Sons-Nathdwara-Road/',
+        'facebook'  => '',
+        'instagram' => '',
+    ],
+
+    'seo' => [
+        // Fallback <meta name="description"> for pages that do not set their own.
+        'description' => 'Modi And Sons, Nathdwara — wholesaler, distributor and supplier of PVC pipes, '
+            .'electrical wires, fans, LED lights, water pumps, tarpaulin and fencing wire. Request a wholesale quote.',
+
+        // Typical order value band, shown by Google for local businesses.
+        'price_range' => '₹₹',
+
+        // google-site-verification token (the content value only, not the tag).
+        'verification' => env('GOOGLE_SITE_VERIFICATION', ''),
+    ],
+
     'ga4' => env('GA4_ID', ''),
 ];

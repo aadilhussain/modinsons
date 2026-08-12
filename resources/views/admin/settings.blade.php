@@ -139,6 +139,70 @@
       </div>
 
       <div class="panel">
+        <div class="panel-head"><h3>Search engine settings</h3></div>
+        <div class="panel-body">
+          <div class="fgrid">
+            <div class="field full">
+              <label for="seo_description">Default meta description</label>
+              <textarea id="seo_description" name="seo[description]" maxlength="320"
+                        style="min-height:80px">{{ old('seo.description', $biz['seo']['description']) }}</textarea>
+              <div class="hint">Shown under the title in Google for pages without their own description.
+                Aim for 150–160 characters.</div>
+            </div>
+            <div class="field full">
+              <label for="ga4">Google Analytics ID</label>
+              <input id="ga4" name="ga4" value="{{ old('ga4', $biz['ga4']) }}" placeholder="G-XXXXXXXXXX">
+              <div class="hint">Leave blank to disable analytics.</div>
+            </div>
+            <div class="field full">
+              <label for="verification">Search Console verification</label>
+              <input id="verification" name="seo[verification]"
+                     value="{{ old('seo.verification', $biz['seo']['verification']) }}"
+                     placeholder="Paste only the content value">
+              <div class="hint">From Google Search Console → HTML tag method. Paste just the code,
+                not the whole <code>&lt;meta&gt;</code> tag.</div>
+            </div>
+            <div class="field">
+              <label for="lat">Map latitude</label>
+              <input id="lat" name="geo[lat]" value="{{ old('geo.lat', $biz['geo']['lat']) }}" placeholder="24.9377">
+            </div>
+            <div class="field">
+              <label for="lng">Map longitude</label>
+              <input id="lng" name="geo[lng]" value="{{ old('geo.lng', $biz['geo']['lng']) }}" placeholder="73.8233">
+              <div class="hint">Right-click your shop in Google Maps to copy both.</div>
+            </div>
+            <div class="field">
+              <label for="price_range">Price range</label>
+              <input id="price_range" name="seo[price_range]" value="{{ old('seo.price_range', $biz['seo']['price_range']) }}" placeholder="₹₹">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Listings &amp; social profiles</h3></div>
+        <div class="panel-body">
+          <p class="small muted mb-2">Linking these tells search engines the listings belong to this
+            business, which strengthens the local result.</p>
+          <div class="fgrid">
+            @foreach ([
+              'indiamart' => 'IndiaMART',
+              'justdial'  => 'JustDial',
+              'facebook'  => 'Facebook',
+              'instagram' => 'Instagram',
+            ] as $key => $label)
+              <div class="field full">
+                <label for="social_{{ $key }}">{{ $label }}</label>
+                <input id="social_{{ $key }}" name="social[{{ $key }}]" type="url"
+                       value="{{ old('social.'.$key, $biz['social'][$key] ?? '') }}"
+                       placeholder="https://…">
+              </div>
+            @endforeach
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
         <div class="panel-body">
           <button class="btn btn-accent btn-lg btn-block" type="submit">
             <x-icon name="check" :size="17"/> Save business details</button>

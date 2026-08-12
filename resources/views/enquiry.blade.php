@@ -3,6 +3,10 @@
 @section('meta', 'Send your requirement to Modi And Sons, Nathdwara — we quote wholesale rates for pipes, wires, fans, lighting, pumps, tarpaulin and fencing wire the same working day.')
 @section('robots', 'index,follow')
 
+@push('schema')
+@include('partials.breadcrumb-schema', ['trail' => ['Home' => route('home'), 'Request a Quote' => null]])
+@endpush
+
 @section('content')
 @php $biz = config('business'); @endphp
 <div class="wrap">

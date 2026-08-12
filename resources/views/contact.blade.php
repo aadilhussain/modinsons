@@ -5,13 +5,12 @@
 @push('schema')
 <script type="application/ld+json">
 {!! json_encode([
-  '@context'=>'https://schema.org','@type'=>'ContactPage',
-  'mainEntity'=>[
-    '@type'=>'Organization','name'=>config('business.legal_name'),
-    'telephone'=>config('business.phone'),'email'=>config('business.email'),
-  ],
-], JSON_UNESCAPED_SLASHES) !!}
+  '@context' => 'https://schema.org', '@type' => 'ContactPage',
+  // Points at the business described once in the layout rather than repeating it.
+  'mainEntity' => ['@id' => url('/').'#business'],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
+@include('partials.breadcrumb-schema', ['trail' => ['Home' => route('home'), 'Contact' => null]])
 @endpush
 
 @section('content')

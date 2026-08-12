@@ -53,13 +53,33 @@ class Product extends Model
     /** Uploaded image if present, otherwise the bundled category illustration. */
     public function getImageUrlAttribute(): string
     {
-        if ($this->image_path && Storage::disk('public')->exists($this->image_path)) {
+        if ($this->hasPhoto()) {
             return Storage::disk('public')->url($this->image_path);
         }
 
         $icon = $this->category?->icon ?: 'default';
 
         return asset("assets/img/{$icon}.svg");
+    }
+
+    /** True when a real uploaded photo backs this product. */
+    public function hasPhoto(): bool
+    {
+        return $this->image_path && Storage::disk('public')->exists($this->image_path);
+    }
+
+    /**
+     * A raster image URL for social cards, structured data and image sitemaps.
+     *
+     * The catalogue illustrations are SVGs, which Facebook, WhatsApp, X and
+     * Google's rich results all refuse to render — products without a photo
+     * fall back to the site's share card rather than a link with a blank image.
+     */
+    public function getSocialImageUrlAttribute(): string
+    {
+        return $this->hasPhoto()
+            ? Storage::disk('public')->url($this->image_path)
+            : asset('assets/img/og-cover.png');
     }
 
     public function scopeActive(Builder $q): Builder

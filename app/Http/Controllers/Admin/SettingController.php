@@ -34,6 +34,18 @@ class SettingController extends Controller
         'address.state'    => ['nullable', 'string', 'max:80'],
         'address.pincode'  => ['nullable', 'string', 'max:12'],
         'address.country'  => ['nullable', 'string', 'max:80'],
+
+        // SEO
+        'seo.description'  => ['nullable', 'string', 'max:320'],
+        'seo.price_range'  => ['nullable', 'string', 'max:12'],
+        'seo.verification' => ['nullable', 'string', 'max:120'],
+        'ga4'              => ['nullable', 'string', 'max:40'],
+        'geo.lat'          => ['nullable', 'numeric', 'between:-90,90'],
+        'geo.lng'          => ['nullable', 'numeric', 'between:-180,180'],
+        'social.indiamart' => ['nullable', 'url', 'max:300'],
+        'social.justdial'  => ['nullable', 'url', 'max:300'],
+        'social.facebook'  => ['nullable', 'url', 'max:300'],
+        'social.instagram' => ['nullable', 'url', 'max:300'],
     ];
 
     public function edit()

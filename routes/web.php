@@ -25,6 +25,7 @@ Route::get('/enquiry/thank-you', [EnquiryController::class, 'thanks'])->name('en
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [PageController::class, 'robots'])->name('robots');
 
 /* ------------------------- Auth --------------------------- */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

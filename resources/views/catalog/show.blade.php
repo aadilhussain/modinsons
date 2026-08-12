@@ -1,26 +1,40 @@
 @extends('layouts.app')
 @section('title', $product->name.($product->brand ? ' — '.$product->brand : '').' | Wholesale Price on Enquiry')
 @section('meta', Str::limit($product->short_description ?: $product->description, 158))
+@section('og_type', 'product')
+@section('image', url($product->social_image_url))
 
 @push('schema')
 <script type="application/ld+json">
-{!! json_encode([
+{!! json_encode(array_filter([
   '@context' => 'https://schema.org', '@type' => 'Product',
   'name' => $product->name,
   'description' => $product->short_description ?: Str::limit($product->description, 300),
-  'sku' => $product->sku,
+  'sku' => $product->sku ?: null,
+  'mpn' => $product->sku ?: null,
   'category' => $product->category->name,
-  'image' => url($product->image_url),
+  'image' => url($product->social_image_url),
+  'url' => route('product', $product),
   'brand' => ['@type' => 'Brand', 'name' => $product->brand ?: config('business.name')],
   'offers' => [
     '@type' => 'Offer',
     'priceCurrency' => 'INR',
     'availability' => 'https://schema.org/InStock',
     'url' => route('product', $product),
-    'seller' => ['@type' => 'Organization', 'name' => config('business.legal_name')],
+    'availableAtOrFrom' => ['@id' => url('/').'#business'],
+    'seller' => ['@id' => url('/').'#business'],
+    // Rates are quoted per enquiry, so there is no public price to publish.
+    // businessFunction marks this as a sale offer without asserting a figure.
+    'businessFunction' => 'http://purl.org/goodrelations/v1#Sell',
   ],
-], JSON_UNESCAPED_SLASHES) !!}
+]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
+@include('partials.breadcrumb-schema', ['trail' => [
+  'Home' => route('home'),
+  'Products' => route('products'),
+  $product->category->name => route('category', $product->category),
+  $product->name => null,
+]])
 @endpush
 
 @section('content')

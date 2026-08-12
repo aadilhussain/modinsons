@@ -1,20 +1,31 @@
-@php $biz = config('business'); @endphp
+@php
+  $biz = config('business');
+  $ogImage = trim($__env->yieldContent('image')) ?: asset('assets/img/og-cover.png');
+@endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@yield('title', $biz['name'].' — Electricals & Hardware Wholesaler, Nathdwara')</title>
-<meta name="description" content="@yield('meta', 'Modi And Sons, Nathdwara — wholesaler, distributor and supplier of PVC pipes, electrical wires, fans, LED lights, water pumps, tarpaulin and fencing wire. Request a wholesale quote.')">
-<link rel="canonical" href="{{ url()->current() }}">
-<meta name="robots" content="@yield('robots', 'index,follow,max-image-preview:large')">
-<meta property="og:type" content="website">
+<meta name="description" content="@yield('meta', $biz['seo']['description'])">
+<link rel="canonical" href="{{ \App\Support\Seo::canonical(request()) }}">
+<meta name="robots" content="@yield('robots', \App\Support\Seo::robots(request()))">
+@if ($biz['seo']['verification'])
+<meta name="google-site-verification" content="{{ $biz['seo']['verification'] }}">
+@endif
+<meta property="og:type" content="@yield('og_type', 'website')">
 <meta property="og:site_name" content="{{ $biz['name'] }}">
 <meta property="og:title" content="@yield('title', $biz['name'])">
-<meta property="og:description" content="@yield('meta', $biz['tagline'])">
-<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:description" content="@yield('meta', $biz['seo']['description'])">
+<meta property="og:url" content="{{ \App\Support\Seo::canonical(request()) }}">
 <meta property="og:locale" content="en_IN">
+<meta property="og:image" content="{{ $ogImage }}">
+<meta property="og:image:alt" content="{{ $biz['name'] }} — {{ $biz['tagline'] }}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="@yield('title', $biz['name'])">
+<meta name="twitter:description" content="@yield('meta', $biz['seo']['description'])">
+<meta name="twitter:image" content="{{ $ogImage }}">
 <meta name="theme-color" content="#102a4c">
 <link rel="icon" href="{{ asset('assets/img/favicon.svg') }}" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,28 +33,76 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
 
+@php
+  // One @id for the business so Product/Breadcrumb blocks on other pages can
+  // point back at this entity instead of redescribing it.
+  $bizId = url('/').'#business';
+
+  $phones = array_values(array_filter([$biz['phone'], $biz['phone_alt'] ?? '']));
+  $sameAs = array_values(array_filter($biz['social'] ?? []));
+
+  $business = [
+    '@context' => 'https://schema.org',
+    '@type' => 'HardwareStore',
+    '@id' => $bizId,
+    'name' => $biz['legal_name'],
+    'description' => 'Wholesaler, distributor and supplier of electricals and hardware — PVC pipes, wires and cables, fans, LED lighting, water pumps, tarpaulin and fencing wire.',
+    'url' => url('/'),
+    'image' => asset('assets/img/og-cover.png'),
+    'logo' => asset('assets/img/favicon.svg'),
+    'telephone' => $biz['phone'],
+    'email' => $biz['email'],
+    'foundingDate' => (string) $biz['established'],
+    'currenciesAccepted' => 'INR',
+    'priceRange' => $biz['seo']['price_range'],
+    'address' => [
+      '@type' => 'PostalAddress',
+      'streetAddress' => $biz['address']['line1'],
+      'addressLocality' => $biz['address']['city'],
+      'addressRegion' => $biz['address']['state'],
+      'postalCode' => $biz['address']['pincode'],
+      'addressCountry' => 'IN',
+    ],
+    'areaServed' => $biz['serves'],
+    'openingHours' => 'Mo-Sa 09:30-20:00',
+  ];
+
+  if (count($phones) > 1) {
+    $business['contactPoint'] = array_map(fn ($p) => [
+      '@type' => 'ContactPoint', 'telephone' => $p, 'contactType' => 'sales', 'areaServed' => 'IN',
+    ], $phones);
+  }
+
+  if ($sameAs) {
+    $business['sameAs'] = $sameAs;
+  }
+
+  // Only publish coordinates once they are actually filled in — a wrong pin is
+  // worse for local search than no pin.
+  if (filled($biz['geo']['lat'] ?? '') && filled($biz['geo']['lng'] ?? '')) {
+    $business['geo'] = [
+      '@type' => 'GeoCoordinates',
+      'latitude' => (string) $biz['geo']['lat'],
+      'longitude' => (string) $biz['geo']['lng'],
+    ];
+  }
+@endphp
+<script type="application/ld+json">
+{!! json_encode($business, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
 <script type="application/ld+json">
 {!! json_encode([
   '@context' => 'https://schema.org',
-  '@type' => 'HardwareStore',
-  'name' => $biz['legal_name'],
-  'description' => 'Wholesaler, distributor and supplier of electricals and hardware — PVC pipes, wires and cables, fans, LED lighting, water pumps, tarpaulin and fencing wire.',
+  '@type' => 'WebSite',
   'url' => url('/'),
-  'telephone' => $biz['phone'],
-  'email' => $biz['email'],
-  'foundingDate' => (string) $biz['established'],
-  'currenciesAccepted' => 'INR',
-  'address' => [
-    '@type' => 'PostalAddress',
-    'streetAddress' => $biz['address']['line1'],
-    'addressLocality' => $biz['address']['city'],
-    'addressRegion' => $biz['address']['state'],
-    'postalCode' => $biz['address']['pincode'],
-    'addressCountry' => 'IN',
+  'name' => $biz['name'],
+  'publisher' => ['@id' => $bizId],
+  'potentialAction' => [
+    '@type' => 'SearchAction',
+    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => route('products').'?q={search_term_string}'],
+    'query-input' => 'required name=search_term_string',
   ],
-  'areaServed' => $biz['serves'],
-  'openingHours' => 'Mo-Sa 09:30-20:00',
-], JSON_UNESCAPED_SLASHES) !!}
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @stack('schema')
 

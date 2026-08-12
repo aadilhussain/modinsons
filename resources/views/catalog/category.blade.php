@@ -3,15 +3,24 @@
 @section('meta', Str::limit($category->description ?: $category->tagline, 160))
 
 @push('schema')
+@include('partials.breadcrumb-schema', ['trail' => [
+  'Home' => route('home'),
+  'Products' => route('products'),
+  $category->name => null,
+]])
 <script type="application/ld+json">
 {!! json_encode([
-  '@context' => 'https://schema.org', '@type' => 'BreadcrumbList',
-  'itemListElement' => [
-    ['@type'=>'ListItem','position'=>1,'name'=>'Home','item'=>route('home')],
-    ['@type'=>'ListItem','position'=>2,'name'=>'Products','item'=>route('products')],
-    ['@type'=>'ListItem','position'=>3,'name'=>$category->name,'item'=>route('category',$category)],
-  ],
-], JSON_UNESCAPED_SLASHES) !!}
+  '@context' => 'https://schema.org',
+  '@type' => 'ItemList',
+  'name' => $category->name,
+  'numberOfItems' => $products->total(),
+  'itemListElement' => collect($products->items())->values()->map(fn ($p, $i) => [
+    '@type' => 'ListItem',
+    'position' => $products->firstItem() + $i,
+    'url' => route('product', $p),
+    'name' => $p->name,
+  ])->all(),
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endpush
 

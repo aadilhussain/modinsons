@@ -2,6 +2,10 @@
 @section('title', 'About Us — Electricals & Hardware Wholesaler in Nathdwara | '.config('business.name'))
 @section('meta', 'Modi And Sons has supplied electricals and hardware from Nathdwara since 2012 — wholesaler, distributor, supplier and retailer serving Rajsamand, Udaipur and across Rajasthan.')
 
+@push('schema')
+@include('partials.breadcrumb-schema', ['trail' => ['Home' => route('home'), 'About Us' => null]])
+@endpush
+
 @section('content')
 @php $biz = config('business'); @endphp
 <div class="wrap"><nav class="crumbs"><a href="{{ route('home') }}">Home</a><span class="sep">/</span><span>About Us</span></nav></div>
