@@ -29,6 +29,8 @@
         <x-icon name="grid"/> Categories</a>
       <a href="{{ route('admin.enquiries.index') }}" class="{{ request()->routeIs('admin.enquiries.*') ? 'on' : '' }}">
         <x-icon name="inbox"/> Enquiries</a>
+      <a href="{{ route('admin.settings.edit') }}" class="{{ request()->routeIs('admin.settings.*') ? 'on' : '' }}">
+        <x-icon name="settings"/> Settings</a>
       <a href="{{ route('home') }}" target="_blank"><x-icon name="eye"/> View Site</a>
       <form method="POST" action="{{ route('logout') }}" style="margin-top:10px">
         @csrf

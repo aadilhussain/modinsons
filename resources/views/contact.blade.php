@@ -24,12 +24,13 @@
     <h1 class="h1 mb-3">Call, message or visit the counter</h1>
 
     <div class="grid mb-3" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
-      @foreach ([
+      @foreach (array_filter([
         ['phone','Call us', $biz['phone'], 'tel:'.$biz['phone']],
+        ($biz['phone_alt'] ?? '') ? ['phone','Alternate line', $biz['phone_alt'], 'tel:'.$biz['phone_alt']] : null,
         ['wa','WhatsApp', 'Send your item list', 'https://wa.me/'.$biz['whatsapp']],
         ['mail','Email', $biz['email'], 'mailto:'.$biz['email']],
         ['clock','Open', $biz['hours'], null],
-      ] as [$ic,$t,$v,$href])
+      ]) as [$ic,$t,$v,$href])
         <div class="form-card rv">
           <span style="width:42px;height:42px;border-radius:10px;background:var(--navy-100);color:var(--navy-700);
                        display:grid;place-items:center;margin-bottom:12px"><x-icon :name="$ic" :size="20"/></span>
@@ -51,9 +52,15 @@
           {{ $biz['address']['city'] }}, {{ $biz['address']['district'] }}<br>
           {{ $biz['address']['state'] }} {{ $biz['address']['pincode'] }}, {{ $biz['address']['country'] }}</p>
         <p class="small muted mb-2"><strong class="strong">Timings:</strong> {{ $biz['hours'] }}</p>
+        @php
+          // A map link saved in Settings wins; otherwise search by the address.
+          $mapSrc = ($biz['map_embed'] ?? '') ?: 'https://www.google.com/maps?q='.urlencode(
+            $biz['address']['line1'].', '.$biz['address']['city'].', '.$biz['address']['state'].' '.$biz['address']['pincode']
+          ).'&output=embed';
+        @endphp
         <div style="border:1px solid var(--line);border-radius:var(--r);overflow:hidden;aspect-ratio:16/10">
-          <iframe title="Modi And Sons location, Nathdwara" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q={{ urlencode($biz['address']['line1'].', '.$biz['address']['city'].', '.$biz['address']['state'].' '.$biz['address']['pincode']) }}&output=embed"
+          <iframe title="{{ $biz['name'] }} location, {{ $biz['address']['city'] }}" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade" src="{{ $mapSrc }}"
             style="width:100%;height:100%;border:0"></iframe>
         </div>
       </div>
