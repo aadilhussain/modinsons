@@ -66,6 +66,21 @@ Route::get('/__diag', function () {
         'cache_get' => fn () => var_export(\Cache::get('diag_key'), true),
         'cache_increment' => fn () => var_export(\Cache::increment('diag_key'), true),
         'session_table' => fn () => \DB::table('sessions')->count(),
+        'txn_select_for_update' => function () {
+            \DB::beginTransaction();
+            try {
+                $r = \DB::table('cache')->where('key', 'laravel_cache_diag_key')->lockForUpdate()->first();
+                \DB::rollBack();
+                return 'row='.json_encode($r);
+            } catch (\Throwable $e) {
+                try { \DB::rollBack(); } catch (\Throwable $x) {}
+                throw $e;
+            }
+        },
+        'plain_select_for_update' => function () {
+            $r = \DB::select('select * from cache where key = ? for update', ['laravel_cache_diag_key']);
+            return 'rows='.count($r);
+        },
     ];
 
     foreach ($steps as $name => $fn) {
