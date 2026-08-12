@@ -5,6 +5,7 @@ use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 // Vercel's filesystem is read-only outside /tmp, and /tmp is wiped between
 // invocations. Point Laravel's writable paths (logs, compiled views, cache)
@@ -36,6 +37,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        /*
+         * TLS terminates at the platform's edge, so PHP sees a plain HTTP
+         * request and builds http:// URLs — which would put the wrong scheme in
+         * canonical tags, og:url and pagination links. Trusting the forwarded
+         * headers restores the original scheme, host and port.
+         *
+         * Safe here because the platform proxy is the only route to the app;
+         * it always overwrites these headers on inbound requests.
+         */
+        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_HOST
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO);
+
         // Every public page view is recorded for the per-page visitor counters.
         $middleware->appendToGroup('web', TrackPageView::class);
         $middleware->alias([
