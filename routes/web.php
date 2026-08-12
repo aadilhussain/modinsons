@@ -52,3 +52,29 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('/enquiries/{enquiry}', [AdminEnquiryController::class, 'update'])->name('enquiries.update');
     Route::delete('/enquiries/{enquiry}', [AdminEnquiryController::class, 'destroy'])->name('enquiries.destroy');
 });
+
+// TEMPORARY DIAGNOSTIC — remove once the login transaction issue is resolved.
+Route::get('/__diag', function () {
+    $out = [];
+    $out['cache_store'] = config('cache.default');
+    $out['session_driver'] = config('session.driver');
+    $out['db_host'] = config('database.connections.pgsql.host');
+
+    $steps = [
+        'raw_select' => fn () => \DB::select('select 1 as ok')[0]->ok,
+        'cache_add' => fn () => var_export(\Cache::add('diag_key', 0, 60), true),
+        'cache_get' => fn () => var_export(\Cache::get('diag_key'), true),
+        'cache_increment' => fn () => var_export(\Cache::increment('diag_key'), true),
+        'session_table' => fn () => \DB::table('sessions')->count(),
+    ];
+
+    foreach ($steps as $name => $fn) {
+        try {
+            $out[$name] = 'OK: '.$fn();
+        } catch (\Throwable $e) {
+            $out[$name] = 'FAIL: '.get_class($e).' :: '.$e->getMessage();
+        }
+    }
+
+    return response()->json($out, 200, [], JSON_PRETTY_PRINT);
+});
