@@ -26,8 +26,13 @@
           <option value="{{ $c->id }}" @selected(request('category')==$c->id)>{{ $c->name }}</option>
         @endforeach
       </select>
+      <select class="select" name="sort" data-autosubmit aria-label="Sort products">
+        @foreach ($sorts as $key => $label)
+          <option value="{{ $key }}" @selected($sort === $key)>{{ $label }}</option>
+        @endforeach
+      </select>
       <button class="btn btn-outline btn-sm" type="submit">Filter</button>
-      @if (request('q') || request('category'))
+      @if (request('q') || request('category') || request('sort'))
         <a class="btn btn-ghost btn-sm" href="{{ route('admin.products.index') }}">Clear</a>
       @endif
     </form>
@@ -35,7 +40,9 @@
 
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th></th><th>Product</th><th>Category</th><th>Brand</th><th>MOQ</th><th>Views</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th></th><th>Product</th><th>Category</th><th>Brand</th>
+        {{-- Internal rate: shown here only, never on the public catalogue. --}}
+        <th>Rate</th><th>MOQ</th><th>Added</th><th>Views</th><th>Status</th><th></th></tr></thead>
       <tbody>
       @forelse ($products as $p)
         <tr>
@@ -46,7 +53,16 @@
           </td>
           <td class="small">{{ $p->category?->name }}</td>
           <td class="small">{{ $p->brand ?: '—' }}</td>
+          <td class="small">
+            @if (! is_null($p->price))
+              <span class="strong">₹{{ number_format((float) $p->price, 2) }}</span>
+            @else
+              —
+            @endif
+          </td>
           <td class="small">{{ $p->min_order_qty ?: '—' }}</td>
+          <td class="small" title="{{ $p->created_at?->format('d M Y, g:i a') }}">
+            {{ $p->created_at?->format('d M Y') ?: '—' }}</td>
           <td class="small">{{ number_format($p->views) }}</td>
           <td>
             <form method="POST" action="{{ route('admin.products.toggle', $p) }}">
@@ -68,7 +84,7 @@
           </td>
         </tr>
       @empty
-        <tr><td colspan="8" class="empty"><x-icon name="box" :size="42"/><p>No products yet.</p>
+        <tr><td colspan="10" class="empty"><x-icon name="box" :size="42"/><p>No products yet.</p>
           <a class="btn btn-primary mt-2" href="{{ route('admin.products.create') }}">Add your first product</a></td></tr>
       @endforelse
       </tbody>

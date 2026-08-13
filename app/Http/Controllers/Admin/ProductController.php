@@ -36,7 +36,7 @@ class ProductController extends Controller
 
             fputcsv($out, array_merge([
                 'Name', 'SKU', 'Category', 'Brand', 'Short Description', 'Description',
-                'Unit', 'Min Order Qty', 'Badge', 'Sort Order', 'Is Active', 'Is Featured',
+                'Unit', 'Price', 'Min Order Qty', 'Badge', 'Sort Order', 'Is Active', 'Is Featured',
             ], $specKeys));
 
             Product::with('category')->orderBy('category_id')->orderBy('sort_order')->orderBy('name')
@@ -46,7 +46,8 @@ class ProductController extends Controller
 
                         fputcsv($out, array_merge([
                             $p->name, $p->sku, $p->category?->name, $p->brand,
-                            $p->short_description, $p->description, $p->unit, $p->min_order_qty,
+                            $p->short_description, $p->description, $p->unit,
+                            $p->price, $p->min_order_qty,
                             $p->badge, $p->sort_order,
                             $p->is_active ? 'Yes' : 'No',
                             $p->is_featured ? 'Yes' : 'No',
@@ -58,17 +59,48 @@ class ProductController extends Controller
         }, $name, ['Content-Type' => 'text/csv']);
     }
 
+    /**
+     * Sort options for the admin list, mapped to the ordering each applies.
+     *
+     * Whitelisted rather than taking a column from the query string, so the
+     * sort parameter can never be used to order by an arbitrary column.
+     */
+    protected const SORTS = [
+        'newest'     => ['label' => 'Newest first',   'apply' => ['created_at', 'desc']],
+        'oldest'     => ['label' => 'Oldest first',   'apply' => ['created_at', 'asc']],
+        'az'         => ['label' => 'Name A–Z',       'apply' => ['name', 'asc']],
+        'za'         => ['label' => 'Name Z–A',       'apply' => ['name', 'desc']],
+        'price_low'  => ['label' => 'Price low → high', 'apply' => ['price', 'asc']],
+        'price_high' => ['label' => 'Price high → low', 'apply' => ['price', 'desc']],
+        'sku'        => ['label' => 'Code / SKU',     'apply' => ['sku', 'asc']],
+        'views'      => ['label' => 'Most viewed',    'apply' => ['views', 'desc']],
+    ];
+
     public function index(Request $request)
     {
-        $products = Product::with('category')
+        $sort = $request->query('sort');
+        $sort = isset(self::SORTS[$sort]) ? $sort : 'newest';
+        [$column, $direction] = self::SORTS[$sort]['apply'];
+
+        $query = Product::with('category')
             ->search($request->query('q'))
-            ->when($request->query('category'), fn ($q, $c) => $q->where('category_id', $c))
-            ->orderByDesc('id')
+            ->when($request->query('category'), fn ($q, $c) => $q->where('category_id', $c));
+
+        // Unpriced products always sit last rather than filling the first page
+        // with blanks, whichever direction the rate is sorted in.
+        if ($column === 'price') {
+            $query->orderByRaw('CASE WHEN price IS NULL THEN 1 ELSE 0 END');
+        }
+
+        $products = $query->orderBy($column, $direction)
+            ->orderBy('id', 'desc')
             ->paginate(20)->withQueryString();
 
         return view('admin.products.index', [
             'products'   => $products,
             'categories' => Category::orderBy('name')->get(),
+            'sorts'      => collect(self::SORTS)->map->label,
+            'sort'       => $sort,
         ]);
     }
 
@@ -146,6 +178,7 @@ class ProductController extends Controller
             'short_description' => ['nullable', 'string', 'max:255'],
             'description'       => ['nullable', 'string', 'max:5000'],
             'unit'              => ['required', 'string', 'max:40'],
+            'price'             => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'min_order_qty'     => ['nullable', 'string', 'max:60'],
             'badge'             => ['nullable', 'string', 'max:30'],
             'sort_order'        => ['nullable', 'integer', 'min:0'],

@@ -16,12 +16,20 @@ class Product extends Model
 
     protected $fillable = [
         'category_id', 'name', 'slug', 'brand', 'sku', 'short_description', 'description',
-        'specs', 'unit', 'min_order_qty', 'image_path', 'badge',
+        'specs', 'unit', 'price', 'min_order_qty', 'image_path', 'badge',
         'is_active', 'is_featured', 'sort_order', 'views',
     ];
 
+    /**
+     * The internal rate is never published — the catalogue quotes on enquiry.
+     * Hiding it here keeps it out of any accidental toJson()/toArray() on a
+     * public page or API response, whatever a view happens to do.
+     */
+    protected $hidden = ['price'];
+
     protected $casts = [
         'specs' => 'array',
+        'price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
     ];

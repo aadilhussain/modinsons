@@ -30,6 +30,7 @@ class CatalogueMapper
         'short_description' => ['short_description', 'summary', 'tagline', 'subtitle'],
         'description'       => ['description', 'details', 'long_description', 'notes', 'remarks'],
         'unit'              => ['unit', 'uom', 'selling_unit', 'measure'],
+        'price'             => ['price', 'rate', 'mrp', 'cost', 'list_price', 'unit_price', 'dealer_price', 'net_rate'],
         'min_order_qty'     => ['min_order_qty', 'moq', 'minimum_order', 'min_qty', 'minimum_order_quantity'],
         'badge'             => ['badge', 'label', 'tag', 'highlight'],
         'sort_order'        => ['sort_order', 'order', 'position', 'sr_no', 'sr', 'serial'],
@@ -144,6 +145,7 @@ class CatalogueMapper
             'short_description' => mb_substr($get('short_description'), 0, 255),
             'description'       => mb_substr($get('description'), 0, 5000),
             'unit'              => $this->unit($get('unit')),
+            'price'             => $this->price($get('price')),
             'min_order_qty'     => mb_substr($get('min_order_qty'), 0, 60),
             'badge'             => mb_substr($get('badge'), 0, 30),
             'sort_order'        => (int) preg_replace('/\D/', '', $get('sort_order')) ?: 0,
@@ -204,6 +206,35 @@ class CatalogueMapper
         }
 
         return mb_substr($value, 0, 40);
+    }
+
+    /**
+     * Price cells arrive as "₹1,250.00", "1250/-" or "Rs. 1250" — keep the
+     * number and drop the decoration. Blank stays null so an import without a
+     * rate column does not wipe rates already entered.
+     */
+    protected function price(string $value): ?string
+    {
+        /*
+         * Match the number itself rather than stripping punctuation, because
+         * stripping leaves the full stop in "Rs. 1100" attached to the digits
+         * and turns ₹1,100 into ₹0.11.
+         *
+         * Handles 1250, 1,250.00, 1,00,000.50 (lakh grouping) and 1250/-.
+         */
+        if (! preg_match('/\d+(?:,\d{2,3})*(?:\.\d{1,2})?/', $value, $m)) {
+            return null;
+        }
+
+        $number = str_replace(',', '', $m[0]);
+
+        if (! is_numeric($number)) {
+            return null;
+        }
+
+        // A string, not a float: the column is a decimal and floats lose
+        // precision on large rates.
+        return number_format((float) $number, 2, '.', '');
     }
 
     protected function boolish(string $value, bool $default): bool

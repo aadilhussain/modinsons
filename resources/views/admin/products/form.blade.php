@@ -53,6 +53,13 @@
             </select>
           </div>
           <div class="field">
+            <label for="price">Internal rate (₹)</label>
+            <input id="price" name="price" type="number" step="0.01" min="0"
+                   value="{{ old('price', $product->price) }}" placeholder="e.g. 1250.00">
+            <div class="hint">For your reference and sorting only — never shown on the website,
+              which always says “Price on Enquiry”.</div>
+          </div>
+          <div class="field">
             <label for="min_order_qty">Minimum order qty</label>
             <input id="min_order_qty" name="min_order_qty" value="{{ old('min_order_qty', $product->min_order_qty) }}" placeholder="e.g. 100 Metre">
           </div>
