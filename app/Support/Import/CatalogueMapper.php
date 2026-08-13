@@ -36,10 +36,11 @@ class CatalogueMapper
         'sort_order'        => ['sort_order', 'order', 'position', 'sr_no', 'sr', 'serial'],
         'is_active'         => ['is_active', 'active', 'status', 'published', 'live'],
         'is_featured'       => ['is_featured', 'featured', 'highlight_on_home'],
+        'image_source'      => ['image_url', 'image', 'image_path', 'photo', 'photo_url', 'picture', 'img'],
     ];
 
     /** Columns that carry no product meaning and should not become specs. */
-    protected const IGNORED = ['id', 'slug', 'image', 'image_path', 'image_url', 'views', 'created_at', 'updated_at', 'url', 'link'];
+    protected const IGNORED = ['id', 'slug', 'views', 'created_at', 'updated_at', 'url', 'link'];
 
     /** Units offered on the product form; anything else falls back to Piece. */
     protected const UNITS = ['Piece', 'Metre', 'Coil', 'Kilogram', 'Set', 'Bundle', 'Square Feet', 'Bag', 'Box'];
@@ -152,6 +153,10 @@ class CatalogueMapper
             'is_active'         => $this->boolish($get('is_active'), true),
             'is_featured'       => $this->boolish($get('is_featured'), false),
             'specs'            => $specs ?: null,
+            // Only queued here, never downloaded during an import: a web
+            // request that fetches a few hundred remote images times out long
+            // before it finishes. `php artisan catalogue:images` collects them.
+            'image_source'      => $this->imageSource($get('image_source')),
         ];
 
         // Match an existing product on code first — it is the stable identifier —
@@ -191,6 +196,16 @@ class CatalogueMapper
             'new_category' => $category === null && $categoryName !== '',
             'existing_id'  => $existing?->id,
         ];
+    }
+
+    /**
+     * Only absolute http(s) URLs are worth queuing. A spreadsheet exported from
+     * Excel often carries "C:\photos\1001.jpg" or a bare filename in the image
+     * column, and neither is fetchable from the server.
+     */
+    protected function imageSource(string $value): ?string
+    {
+        return preg_match('~^https?://~i', $value) ? mb_substr($value, 0, 2048) : null;
     }
 
     protected function unit(string $value): string

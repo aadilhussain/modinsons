@@ -93,13 +93,66 @@ If anything errors, set `APP_DEBUG=true` temporarily — the trace will point st
 2. **`config/business.php`** — verify the phone, email, full address and GST number.
    The IndiaMART listing showed the GST partly masked (`08**********1ZY`); put the real one in.
 3. **Product photos.** The seeder ships 40 real products across 9 categories, but with
-   *illustrations*, not photographs. Upload real photos via the admin — biggest single
-   improvement available.
+   *illustrations*, not photographs. Fix in bulk with `php artisan catalogue:images`
+   (see below) — biggest single improvement available.
 4. **Rates** — none are published, by design. Confirm you want it that way.
 5. Set `APP_URL` and `APP_DEBUG=false`, then
    `php artisan config:cache && php artisan route:cache && php artisan view:cache`.
 6. Submit `sitemap.xml` in Google Search Console and claim the Google Business Profile —
    keep the name, address and phone identical to `config/business.php`.
+
+---
+
+## Product photos in bulk — `php artisan catalogue:images`
+
+Photos are **committed** to `public/assets/products/*.webp`, not uploaded to
+`storage/`. On Vercel the storage path is `/tmp` and is wiped between invocations,
+so an admin upload survives locally but vanishes in production; `/assets` is served
+statically (see `vercel.json`) and a committed file survives a deploy. Both routes
+still work — `Product::image_url` resolves an `assets/…` path with `asset()` and
+anything else through the public disk.
+
+Every image is normalised to a square white-backed WebP (default 900×900, padded
+rather than cropped) so the catalogue grid stays even.
+
+**From a folder of files** — the surest route. Name each file after the product
+code (`1001.jpg`, `MS-PVC-001.png`):
+
+```bash
+php artisan catalogue:images --dir=~/Desktop/toris-photos --dry-run   # check the pairing
+php artisan catalogue:images --dir=~/Desktop/toris-photos
+```
+
+**From a spreadsheet of URLs:**
+
+```bash
+php artisan catalogue:images --worksheet=images.csv    # 1. products still missing a photo
+#    fill the image_url column
+php artisan catalogue:images --csv=images.csv          # 2. queue + download
+```
+
+An `image_url` column in a normal catalogue import is also picked up and queued —
+imports never download, or a 300-row import would time out.
+
+**From a supplier listing page** — proposes a photo per product by matching the
+model code in the image filename or alt text. It writes a CSV and nothing else;
+read it before importing, because a mispaired photo on a B2B catalogue is a
+wrong-goods dispute:
+
+```bash
+php artisan catalogue:images --scan=https://example.com/products/x --worksheet=images.csv
+```
+
+Only point `--scan` at sources you have the right to use — your own photography, a
+supplier's dealer portal, or a brand that has given you its asset pack. Brand
+product photography is copyrighted, and distributor permission is usually a
+one-line email away. The fetcher identifies itself in the User-Agent and pauses
+between requests (`--delay`).
+
+Other options: `--category=slug`, `--limit=n`, `--size=1200`, `--force` (replace
+existing photos), `--dry-run`.
+
+---
 
 ## Seeded catalogue
 

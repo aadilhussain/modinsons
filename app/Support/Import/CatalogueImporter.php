@@ -80,7 +80,7 @@ class CatalogueImporter
 
                     $product->fill(array_filter(
                         $data,
-                        fn ($v, $k) => ! in_array($k, ['sku', 'brand', 'short_description', 'description', 'min_order_qty', 'badge', 'specs', 'price'], true) || filled($v),
+                        fn ($v, $k) => ! in_array($k, ['sku', 'brand', 'short_description', 'description', 'min_order_qty', 'badge', 'specs', 'price', 'image_source'], true) || filled($v),
                         ARRAY_FILTER_USE_BOTH
                     ));
                     $product->save();

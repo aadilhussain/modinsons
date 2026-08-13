@@ -16,7 +16,7 @@ class Product extends Model
 
     protected $fillable = [
         'category_id', 'name', 'slug', 'brand', 'sku', 'short_description', 'description',
-        'specs', 'unit', 'price', 'min_order_qty', 'image_path', 'badge',
+        'specs', 'unit', 'price', 'min_order_qty', 'image_path', 'image_source', 'badge',
         'is_active', 'is_featured', 'sort_order', 'views',
     ];
 
@@ -62,7 +62,7 @@ class Product extends Model
     public function getImageUrlAttribute(): string
     {
         if ($this->hasPhoto()) {
-            return Storage::disk('public')->url($this->image_path);
+            return $this->photoUrl();
         }
 
         $icon = $this->category?->icon ?: 'default';
@@ -73,7 +73,34 @@ class Product extends Model
     /** True when a real uploaded photo backs this product. */
     public function hasPhoto(): bool
     {
-        return $this->image_path && Storage::disk('public')->exists($this->image_path);
+        if (! $this->image_path) {
+            return false;
+        }
+
+        return $this->isCommittedAsset()
+            ? is_file(public_path($this->image_path))
+            : Storage::disk('public')->exists($this->image_path);
+    }
+
+    /**
+     * Photos live in one of two places and both have to keep working.
+     *
+     * Admin uploads go to the public storage disk, which is right for local and
+     * for shared hosting. Bulk-fetched catalogue photos are committed under
+     * public/assets/products instead, because on Vercel storage/ is /tmp and is
+     * wiped between invocations — a committed file is the only one that
+     * survives a deploy. The path prefix is what tells the two apart.
+     */
+    protected function isCommittedAsset(): bool
+    {
+        return str_starts_with((string) $this->image_path, 'assets/');
+    }
+
+    protected function photoUrl(): string
+    {
+        return $this->isCommittedAsset()
+            ? asset($this->image_path)
+            : Storage::disk('public')->url($this->image_path);
     }
 
     /**
@@ -86,7 +113,7 @@ class Product extends Model
     public function getSocialImageUrlAttribute(): string
     {
         return $this->hasPhoto()
-            ? Storage::disk('public')->url($this->image_path)
+            ? $this->photoUrl()
             : asset('assets/img/og-cover.png');
     }
 
