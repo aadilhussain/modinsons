@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Images\VercelBlobStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -136,9 +137,7 @@ class ProductController extends Controller
         $data = $this->validated($request, $product);
 
         if ($path = $this->handleImage($request)) {
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
+            $this->deleteImage($product->image_path);
             $data['image_path'] = $path;
         }
 
@@ -150,9 +149,7 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
-        }
+        $this->deleteImage($product->image_path);
 
         $product->delete();
         $this->bust();
@@ -214,7 +211,29 @@ class ProductController extends Controller
             return null;
         }
 
-        return $request->file('image')->store('products', 'public');
+        $file = $request->file('image');
+
+        // On Vercel local disk storage doesn't survive past the request (see
+        // Product::isCommittedAsset() doc comment), so uploads go to Vercel
+        // Blob whenever it's configured. Falls back to the local public disk
+        // for environments without a blob token (e.g. plain local/shared hosting).
+        return VercelBlobStorage::isConfigured()
+            ? VercelBlobStorage::put($file, 'products')
+            : $file->store('products', 'public');
+    }
+
+    /** Deletes a product photo from wherever handleImage() put it. */
+    protected function deleteImage(?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            VercelBlobStorage::delete($path);
+        } else {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     protected function bust(): void

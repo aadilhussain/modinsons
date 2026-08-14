@@ -77,27 +77,47 @@ class Product extends Model
             return false;
         }
 
+        if ($this->isRemoteUrl()) {
+            // Existence isn't cheaply checkable without a network round trip;
+            // trust the DB record, matching how uploads and deletes keep it in sync.
+            return true;
+        }
+
         return $this->isCommittedAsset()
             ? is_file(public_path($this->image_path))
             : Storage::disk('public')->exists($this->image_path);
     }
 
     /**
-     * Photos live in one of two places and both have to keep working.
+     * Photos live in one of three places and all three have to keep working.
      *
-     * Admin uploads go to the public storage disk, which is right for local and
-     * for shared hosting. Bulk-fetched catalogue photos are committed under
-     * public/assets/products instead, because on Vercel storage/ is /tmp and is
-     * wiped between invocations — a committed file is the only one that
-     * survives a deploy. The path prefix is what tells the two apart.
+     * Admin uploads on Vercel go to Vercel Blob (a full https:// URL), since
+     * storage/ there is /tmp and is wiped between invocations — nothing
+     * written to local disk survives past the request. Admin uploads without
+     * a blob token configured (local/shared hosting) fall back to the public
+     * storage disk. Bulk-fetched catalogue photos are committed under
+     * public/assets/products instead, because a committed file is the only
+     * one guaranteed to survive a deploy without external storage. The path
+     * shape (assets/ prefix vs. http(s):// vs. anything else) is what tells
+     * the three apart.
      */
     protected function isCommittedAsset(): bool
     {
         return str_starts_with((string) $this->image_path, 'assets/');
     }
 
+    protected function isRemoteUrl(): bool
+    {
+        return str_starts_with((string) $this->image_path, 'http://')
+            || str_starts_with((string) $this->image_path, 'https://');
+    }
+
     protected function photoUrl(): string
     {
+        if ($this->isRemoteUrl()) {
+            return $this->image_path;
+        }
+
         return $this->isCommittedAsset()
             ? asset($this->image_path)
             : Storage::disk('public')->url($this->image_path);
