@@ -9,6 +9,7 @@ use App\Support\Images\VercelBlobStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductController extends Controller
@@ -217,9 +218,22 @@ class ProductController extends Controller
         // Product::isCommittedAsset() doc comment), so uploads go to Vercel
         // Blob whenever it's configured. Falls back to the local public disk
         // for environments without a blob token (e.g. plain local/shared hosting).
-        return VercelBlobStorage::isConfigured()
-            ? VercelBlobStorage::put($file, 'products')
-            : $file->store('products', 'public');
+        if (VercelBlobStorage::isConfigured()) {
+            return VercelBlobStorage::put($file, 'products');
+        }
+
+        // On Vercel that fallback disk never persists, so a silent write there
+        // would look like a successful upload and then quietly 404 later.
+        // Fail loudly here instead so a missing/misconfigured blob token is
+        // obvious immediately, not discovered after the fact on the live page.
+        if (env('VERCEL')) {
+            throw ValidationException::withMessages([
+                'image' => 'Image uploads aren\'t configured yet — set BLOB_READ_WRITE_TOKEN in the '
+                    .'Vercel project\'s environment variables (Production scope) and redeploy, then try again.',
+            ]);
+        }
+
+        return $file->store('products', 'public');
     }
 
     /** Deletes a product photo from wherever handleImage() put it. */
