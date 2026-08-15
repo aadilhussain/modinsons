@@ -13,15 +13,15 @@ class CatalogueController extends Controller
     public function home()
     {
         $featured = Cache::remember('home.featured', 300, fn () => Product::active()
-            ->where('is_featured', true)->with('category')
+            ->whereRaw('is_featured = true')->with('category')
             ->orderBy('sort_order')->limit(8)->get());
 
-        $categories = Cache::remember('home.categories', 300, fn () => Category::where('is_active', true)
+        $categories = Cache::remember('home.categories', 300, fn () => Category::whereRaw('is_active = true')
             ->withCount('activeProducts')->orderBy('sort_order')->get());
 
         $stats = Cache::remember('home.stats', 600, fn () => [
             'products'   => Product::active()->count(),
-            'categories' => Category::where('is_active', true)->count(),
+            'categories' => Category::whereRaw('is_active = true')->count(),
             'visitors'   => PageView::distinct('visitor_hash')->count('visitor_hash'),
             'years'      => max(1, now()->year - config('business.established')),
         ]);

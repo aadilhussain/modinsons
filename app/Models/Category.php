@@ -31,7 +31,7 @@ class Category extends Model
 
     public function activeProducts(): HasMany
     {
-        return $this->hasMany(Product::class)->where('is_active', true);
+        return $this->hasMany(Product::class)->whereRaw('is_active = true');
     }
 
     public function getRouteKeyName(): string

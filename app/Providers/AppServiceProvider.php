@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
         // Nav categories are needed on every page — cache to keep queries flat.
         View::composer('*', function ($view) {
             $view->with('navCategories', Cache::remember('nav.categories', 600, function () {
-                return Category::where('is_active', true)
+                return Category::whereRaw('is_active = true')
                     ->orderBy('sort_order')->orderBy('name')
                     ->withCount('activeProducts')
                     ->get();

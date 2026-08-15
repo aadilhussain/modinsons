@@ -55,7 +55,7 @@ class PageController extends Controller
             ['loc' => route('about'), 'pri' => '0.6', 'freq' => 'yearly'],
         ];
 
-        foreach (Category::where('is_active', true)->get() as $c) {
+        foreach (Category::whereRaw('is_active = true')->get() as $c) {
             $urls[] = [
                 'loc' => route('category', $c),
                 'pri' => '0.8',

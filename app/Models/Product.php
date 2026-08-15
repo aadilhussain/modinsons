@@ -158,7 +158,7 @@ class Product extends Model
 
     public function scopeActive(Builder $q): Builder
     {
-        return $q->where('is_active', true);
+        return $q->whereRaw('is_active = true');
     }
 
     public function scopeLowOrOutOfStock(Builder $q): Builder
