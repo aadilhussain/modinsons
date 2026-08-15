@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\Enquiry;
 use App\Models\Setting;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
@@ -35,6 +36,19 @@ class AppServiceProvider extends ServiceProvider
                     ->withCount('activeProducts')
                     ->get();
             }));
+        });
+
+        // The admin header's notification bell — every admin page shares this
+        // one layout, so composing it here keeps every controller from having
+        // to remember to pass it in.
+        View::composer('admin.layout', function ($view) {
+            $seenAt = auth()->user()?->enquiries_seen_at;
+
+            $view->with('unseenEnquiriesCount', Enquiry::where('status', 'new')
+                ->when($seenAt, fn ($q) => $q->where('created_at', '>', $seenAt))
+                ->count());
+            $view->with('recentNewEnquiries', Enquiry::with('product')
+                ->where('status', 'new')->latest()->limit(6)->get());
         });
     }
 

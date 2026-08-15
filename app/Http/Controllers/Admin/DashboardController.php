@@ -26,6 +26,7 @@ class DashboardController extends Controller
             'enq_total'      => Enquiry::count(),
             'enq_month'      => Enquiry::where('created_at', '>=', $today->copy()->startOfMonth())->count(),
             'products'       => Product::active()->count(),
+            'low_stock'      => Product::lowOrOutOfStock()->count(),
         ];
 
         // ---- 30 day series (views, visitors, enquiries) ----
@@ -78,9 +79,11 @@ class DashboardController extends Controller
 
         $recent = Enquiry::with('product')->latest()->limit(8)->get();
 
+        $lowStockProducts = Product::lowOrOutOfStock()->orderBy('stock_qty')->limit(8)->get();
+
         return view('admin.dashboard', compact(
             'kpi', 'series', 'pages', 'devices', 'referrers',
-            'topProducts', 'mostEnquired', 'byType', 'byStatus', 'recent'
+            'topProducts', 'mostEnquired', 'byType', 'byStatus', 'recent', 'lowStockProducts'
         ));
     }
 }

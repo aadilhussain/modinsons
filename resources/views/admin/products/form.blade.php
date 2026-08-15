@@ -63,6 +63,18 @@
             <label for="min_order_qty">Minimum order qty</label>
             <input id="min_order_qty" name="min_order_qty" value="{{ old('min_order_qty', $product->min_order_qty) }}" placeholder="e.g. 100 Metre">
           </div>
+          <div class="field">
+            <label for="stock_qty">Stock on hand</label>
+            <input id="stock_qty" name="stock_qty" type="number" step="1" min="0"
+                   value="{{ old('stock_qty', $product->stock_qty) }}" placeholder="e.g. 240">
+            <div class="hint">Leave blank if you don't want this product's stock tracked.</div>
+          </div>
+          <div class="field">
+            <label for="low_stock_threshold">Low stock alert below</label>
+            <input id="low_stock_threshold" name="low_stock_threshold" type="number" step="1" min="0"
+                   value="{{ old('low_stock_threshold', $product->low_stock_threshold) }}"
+                   placeholder="Default {{ \App\Models\Product::DEFAULT_LOW_STOCK_THRESHOLD }}">
+          </div>
           <div class="field full">
             <label for="short_description">Short description</label>
             <input id="short_description" name="short_description" maxlength="255"

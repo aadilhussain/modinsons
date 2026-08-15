@@ -42,7 +42,7 @@
     <table class="tbl">
       <thead><tr><th></th><th>Product</th><th>Category</th><th>Brand</th>
         {{-- Internal rate: shown here only, never on the public catalogue. --}}
-        <th>Rate</th><th>MOQ</th><th>Added</th><th>Views</th><th>Status</th><th></th></tr></thead>
+        <th>Rate</th><th>MOQ</th><th>Stock</th><th>Added</th><th>Views</th><th>Status</th><th></th></tr></thead>
       <tbody>
       @forelse ($products as $p)
         <tr>
@@ -61,6 +61,17 @@
             @endif
           </td>
           <td class="small">{{ $p->min_order_qty ?: '—' }}</td>
+          <td class="small">
+            @if (is_null($p->stock_qty))
+              <span class="muted">—</span>
+            @elseif ($p->is_out_of_stock)
+              <span class="tag tag-red">Out of stock</span>
+            @elseif ($p->is_low_stock)
+              <span class="tag tag-amber">{{ $p->stock_qty }} left</span>
+            @else
+              {{ number_format($p->stock_qty) }}
+            @endif
+          </td>
           <td class="small" title="{{ $p->created_at?->format('d M Y, g:i a') }}">
             {{ $p->created_at?->format('d M Y') ?: '—' }}</td>
           <td class="small">{{ number_format($p->views) }}</td>
@@ -84,7 +95,7 @@
           </td>
         </tr>
       @empty
-        <tr><td colspan="10" class="empty"><x-icon name="box" :size="42"/><p>No products yet.</p>
+        <tr><td colspan="11" class="empty"><x-icon name="box" :size="42"/><p>No products yet.</p>
           <a class="btn btn-primary mt-2" href="{{ route('admin.products.create') }}">Add your first product</a></td></tr>
       @endforelse
       </tbody>

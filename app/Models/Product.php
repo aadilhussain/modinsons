@@ -14,9 +14,13 @@ class Product extends Model
 {
     use HasFactory;
 
+    /** Used when a product has stock tracking on but no threshold of its own. */
+    public const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+
     protected $fillable = [
         'category_id', 'name', 'slug', 'brand', 'sku', 'short_description', 'description',
-        'specs', 'unit', 'price', 'min_order_qty', 'image_path', 'image_source', 'badge',
+        'specs', 'unit', 'price', 'min_order_qty', 'stock_qty', 'low_stock_threshold',
+        'image_path', 'image_source', 'badge',
         'is_active', 'is_featured', 'sort_order', 'views',
     ];
 
@@ -30,6 +34,8 @@ class Product extends Model
     protected $casts = [
         'specs' => 'array',
         'price' => 'decimal:2',
+        'stock_qty' => 'integer',
+        'low_stock_threshold' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
     ];
@@ -137,9 +143,28 @@ class Product extends Model
             : asset('assets/img/og-cover.png');
     }
 
+    /** Null stock_qty means "not tracked" — never flagged as low or out. */
+    public function getIsOutOfStockAttribute(): bool
+    {
+        return $this->stock_qty !== null && $this->stock_qty <= 0;
+    }
+
+    public function getIsLowStockAttribute(): bool
+    {
+        return $this->stock_qty !== null
+            && $this->stock_qty > 0
+            && $this->stock_qty <= ($this->low_stock_threshold ?? self::DEFAULT_LOW_STOCK_THRESHOLD);
+    }
+
     public function scopeActive(Builder $q): Builder
     {
         return $q->where('is_active', true);
+    }
+
+    public function scopeLowOrOutOfStock(Builder $q): Builder
+    {
+        return $q->whereNotNull('stock_qty')
+            ->whereRaw('stock_qty <= COALESCE(low_stock_threshold, ?)', [self::DEFAULT_LOW_STOCK_THRESHOLD]);
     }
 
     public function scopeSearch(Builder $q, ?string $term): Builder

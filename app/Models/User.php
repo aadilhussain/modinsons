@@ -10,7 +10,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'is_admin'];
+    protected $fillable = ['name', 'email', 'password', 'is_admin', 'enquiries_seen_at'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -20,6 +20,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'enquiries_seen_at' => 'datetime',
         ];
     }
 }

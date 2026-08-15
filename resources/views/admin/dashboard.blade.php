@@ -45,6 +45,11 @@
     <div class="num">{{ number_format($kpi['products']) }}</div>
     <div class="sub"><a href="{{ route('admin.products.index') }}" style="color:var(--navy-700);font-weight:600">Manage catalogue →</a></div>
   </div>
+  <div class="kpi">
+    <div class="lbl"><x-icon name="tag" :size="14"/> Low / out of stock</div>
+    <div class="num" style="{{ $kpi['low_stock'] ? 'color:var(--red-600)' : '' }}">{{ number_format($kpi['low_stock']) }}</div>
+    <div class="sub">Products at or below their alert threshold</div>
+  </div>
 </div>
 
 <div class="panel">
@@ -175,6 +180,32 @@
     </div>
   </div>
 </div>
+
+@if ($lowStockProducts->count())
+<div class="panel">
+  <div class="panel-head">
+    <h3>Stock alerts</h3>
+    <a class="btn btn-ghost btn-sm" href="{{ route('admin.products.index', ['sort' => 'newest']) }}">Manage products <x-icon name="arrow" :size="14"/></a>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Product</th><th>Category</th><th>Stock left</th><th>Alert threshold</th><th></th></tr></thead>
+      <tbody>
+      @foreach ($lowStockProducts as $p)
+        <tr>
+          <td><strong class="strong">{{ $p->name }}</strong><div class="tiny muted">{{ $p->sku }}</div></td>
+          <td class="small">{{ $p->category?->name }}</td>
+          <td><span class="tag {{ $p->is_out_of_stock ? 'tag-red' : 'tag-amber' }}">
+            {{ $p->is_out_of_stock ? 'Out of stock' : $p->stock_qty.' left' }}</span></td>
+          <td class="small">{{ $p->low_stock_threshold ?? \App\Models\Product::DEFAULT_LOW_STOCK_THRESHOLD }}</td>
+          <td><a class="btn btn-outline btn-sm" href="{{ route('admin.products.edit', $p) }}"><x-icon name="edit" :size="14"/></a></td>
+        </tr>
+      @endforeach
+      </tbody>
+    </table>
+  </div>
+</div>
+@endif
 
 <div class="panel">
   <div class="panel-head">

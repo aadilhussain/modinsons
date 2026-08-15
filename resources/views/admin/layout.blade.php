@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@yield('title', 'Admin') | {{ $biz['name'] }}</title>
 <meta name="robots" content="noindex,nofollow">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" href="{{ asset('assets/img/favicon.svg') }}" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
@@ -42,6 +43,37 @@
   </aside>
 
   <main class="adm-main">
+    <div class="adm-topbar">
+      <div class="adm-clock" id="admClock" title="{{ config('app.timezone') }}">
+        <x-icon name="clock" :size="15"/>
+        <span id="admClockTime">--:--:--</span>
+        <span class="adm-clock-date" id="admClockDate"></span>
+      </div>
+      <div class="adm-notif">
+        <button type="button" class="adm-notif-btn" id="admNotifBtn" aria-haspopup="true" aria-expanded="false"
+                data-seen-url="{{ route('admin.notifications.seen') }}">
+          <x-icon name="bell" :size="17"/>
+          @if ($unseenEnquiriesCount > 0)
+            <span class="adm-notif-badge" id="admNotifBadge">{{ $unseenEnquiriesCount > 99 ? '99+' : $unseenEnquiriesCount }}</span>
+          @endif
+        </button>
+        <div class="adm-notif-drop" id="admNotifDrop">
+          <div class="adm-notif-head">
+            <strong>New enquiries</strong>
+            <span class="tiny muted">{{ $unseenEnquiriesCount }} unread</span>
+          </div>
+          @forelse ($recentNewEnquiries as $e)
+            <a href="{{ route('admin.enquiries.index', ['status' => 'new']) }}" class="adm-notif-item">
+              <span class="strong small">{{ $e->name }}</span>
+              <span class="tiny muted">{{ $e->product?->name ?? 'General enquiry' }} · {{ $e->created_at->diffForHumans() }}</span>
+            </a>
+          @empty
+            <p class="tiny muted" style="padding:16px">No new enquiries.</p>
+          @endforelse
+          <a href="{{ route('admin.enquiries.index', ['status' => 'new']) }}" class="adm-notif-foot">View all new enquiries →</a>
+        </div>
+      </div>
+    </div>
     @if (session('ok'))
       <div class="alert alert-ok"><x-icon name="check"/> <span>{{ session('ok') }}</span></div>
     @endif

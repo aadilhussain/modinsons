@@ -38,7 +38,8 @@ class ProductController extends Controller
 
             fputcsv($out, array_merge([
                 'Name', 'SKU', 'Category', 'Brand', 'Short Description', 'Description',
-                'Unit', 'Price', 'Min Order Qty', 'Badge', 'Sort Order', 'Is Active', 'Is Featured',
+                'Unit', 'Price', 'Min Order Qty', 'Stock Qty', 'Low Stock Threshold',
+                'Badge', 'Sort Order', 'Is Active', 'Is Featured',
             ], $specKeys));
 
             Product::with('category')->orderBy('category_id')->orderBy('sort_order')->orderBy('name')
@@ -49,7 +50,7 @@ class ProductController extends Controller
                         fputcsv($out, array_merge([
                             $p->name, $p->sku, $p->category?->name, $p->brand,
                             $p->short_description, $p->description, $p->unit,
-                            $p->price, $p->min_order_qty,
+                            $p->price, $p->min_order_qty, $p->stock_qty, $p->low_stock_threshold,
                             $p->badge, $p->sort_order,
                             $p->is_active ? 'Yes' : 'No',
                             $p->is_featured ? 'Yes' : 'No',
@@ -178,6 +179,8 @@ class ProductController extends Controller
             'unit'              => ['required', 'string', 'max:40'],
             'price'             => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'min_order_qty'     => ['nullable', 'string', 'max:60'],
+            'stock_qty'         => ['nullable', 'integer', 'min:0'],
+            'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'badge'             => ['nullable', 'string', 'max:30'],
             'sort_order'        => ['nullable', 'integer', 'min:0'],
             'spec_key'          => ['nullable', 'array'],
