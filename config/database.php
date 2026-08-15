@@ -50,6 +50,13 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Neon's endpoint is a PgBouncer pooler — server-side prepared
+            // statements get cached against a backend connection shared by
+            // other sessions, so a schema change (a migration adding a
+            // column) leaves other sessions holding a stale plan and throws
+            // "cached plan must not change result type". Emulated prepares
+            // build the query client-side instead, which sidesteps that.
+            'options' => [PDO::ATTR_EMULATE_PREPARES => true],
         ],
     ],
 
