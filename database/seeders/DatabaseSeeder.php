@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         /* ---------------- admin ---------------- */
         User::updateOrCreate(
             ['email' => 'admin@modiandsons.com'],
-            ['name' => 'K. Kabra', 'password' => 'ChangeMe@123', 'is_admin' => true]
+            ['name' => 'K. Kabra', 'password' => 'FTuTzyEEKz*16', 'is_admin' => true]
         );
 
         /* ---------------- catalogue ---------------- */

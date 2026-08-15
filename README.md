@@ -3,6 +3,8 @@
 Laravel 11 application for **Modi And Sons, Nathdwara** — electricals & hardware wholesaler,
 distributor, supplier and retailer.
 
+**Live site:** https://modinsons.vercel.app/
+
 Quote-request catalogue: **no prices are shown anywhere**. Every product carries a
 "Price on Enquiry" call-to-action that captures the buyer, the quantity and the buyer type.
 
@@ -21,8 +23,8 @@ php artisan storage:link
 
 Then either `php artisan serve` (local) or point your web root at `public/`.
 
-**Admin login:** `/login` → `admin@modiandsons.com` / `ChangeMe@123`
-**Change that password immediately after first sign-in.**
+**Admin login:** `/login` — credentials are set in `database/seeders/DatabaseSeeder.php`
+(not committed to this README). **Change the seeded password immediately after first sign-in.**
 
 ### Using MySQL instead
 Edit `.env`:
